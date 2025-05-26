@@ -76,7 +76,7 @@ export const getFirmaFinansalAnaliz = async (firmaId, donem) => {
  * @param {string|number} firmaId Firma ID'si
  * @param {FormData} formData Dosyayı içeren FormData objesi
  */
-export const uploadFirmaFinancials = async (firmaId, formData) => {
+export const uploadFirmaFinancialsCSV  = async (firmaId, formData) => {
     try {
         const response = await apiClient.post(`/firmalar/${firmaId}/upload_financials`, formData, {
             headers: {
