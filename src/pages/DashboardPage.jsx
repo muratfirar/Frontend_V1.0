@@ -2,7 +2,34 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { getFirmalar, createFirma, deleteFirma } from '../services/firmaService';
-import { Link } from 'react-router-dom'; // Link import edildi
+import { Link } from 'react-router-dom';
+
+// Stil tanımlamalarını bileşenin dışında veya ayrı bir CSS dosyasında yapmak daha iyidir.
+// Bu sadece bir örnek ve temel bir başlangıçtır.
+const styles = {
+    pageContainer: { maxWidth: '1100px', margin: '20px auto', padding: '20px', fontFamily: 'Arial, sans-serif' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', paddingBottom: '20px', borderBottom: '1px solid #e0e0e0' },
+    headerTitle: { margin: 0, color: '#333' },
+    logoutButton: { padding: '10px 20px', backgroundColor: '#d9534f', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px' },
+    section: { marginBottom: '40px', padding: '25px', backgroundColor: '#ffffff', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.08)' },
+    sectionTitle: { marginTop: 0, marginBottom: '20px', color: '#444', borderBottom: '1px solid #f0f0f0', paddingBottom: '10px' },
+    formGroup: { marginBottom: '15px' },
+    label: { display: 'block', marginBottom: '8px', fontWeight: 'bold', color: '#555' },
+    input: { width: '100%', padding: '12px', boxSizing: 'border-box', border: '1px solid #ccc', borderRadius: '4px', fontSize: '16px' },
+    button: { padding: '12px 20px', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '16px', marginRight: '10px' },
+    primaryButton: { backgroundColor: '#007bff' },
+    successButton: { backgroundColor: '#28a745' },
+    cancelButton: { backgroundColor: '#6c757d' },
+    table: { width: '100%', borderCollapse: 'collapse', marginTop: '20px' },
+    th: { padding: '12px 15px', textAlign: 'left', borderBottom: '2px solid #dee2e6', backgroundColor: '#f8f9fa', color: '#495057', fontWeight: 'bold' },
+    td: { padding: '12px 15px', textAlign: 'left', borderBottom: '1px solid #f1f1f1' },
+    actionButton: { marginRight: '8px', padding: '6px 12px', fontSize: '14px', cursor: 'pointer', border: 'none', borderRadius: '4px' },
+    detailButton: { backgroundColor: '#17a2b8', color: 'white' },
+    deleteButton: { backgroundColor: '#dc354f', color: 'white' },
+    link: { textDecoration: 'none', color: '#007bff', fontWeight: 'bold' },
+    errorText: { color: 'red', marginTop: '10px' },
+    infoText: { color: '#666', marginTop: '10px' }
+};
 
 function DashboardPage() {
     const { currentUser, logout } = useAuth();
@@ -17,41 +44,27 @@ function DashboardPage() {
 
     const fetchFirmalar = useCallback(async () => {
         if (!currentUser) return;
-        setIsLoadingFirmalar(true);
-        setErrorFirmalar('');
+        setIsLoadingFirmalar(true); setErrorFirmalar('');
         try {
-            const data = await getFirmalar();
-            setFirmalar(data);
+            const data = await getFirmalar(); setFirmalar(data);
         } catch (err) {
             setErrorFirmalar(err.response?.data?.msg || 'Firmalar yüklenirken bir sorun oluştu.');
-            if (err.response && (err.response.status === 401 || err.response.status === 422)) {
-                logout(); 
-            }
-        } finally {
-            setIsLoadingFirmalar(false);
-        }
+            if (err.response && (err.response.status === 401 || err.response.status === 422)) logout();
+        } finally { setIsLoadingFirmalar(false); }
     }, [currentUser, logout]);
 
-    useEffect(() => {
-        fetchFirmalar();
-    }, [fetchFirmalar]);
+    useEffect(() => { fetchFirmalar(); }, [fetchFirmalar]);
 
     const handleFirmaEkleSubmit = async (e) => {
-        e.preventDefault();
-        setFirmaEklemeHatasi('');
+        e.preventDefault(); setFirmaEklemeHatasi('');
         if (!yeniFirmaAdi.trim() || !yeniFirmaVKN.trim()) {
-            setFirmaEklemeHatasi('Firma adı ve VKN zorunlu alanlardır.');
-            return;
+            setFirmaEklemeHatasi('Firma adı ve VKN zorunlu alanlardır.'); return;
         }
         try {
             const yeniEklenenFirma = await createFirma({ adi: yeniFirmaAdi, vkn: yeniFirmaVKN });
-            setFirmalar(prevFirmalar => [...prevFirmalar, yeniEklenenFirma]);
-            setYeniFirmaAdi(''); 
-            setYeniFirmaVKN('');
-            setFirmaEklemeFormuGorunur(false);
-        } catch (err) {
-            setFirmaEklemeHatasi(err.response?.data?.msg || 'Firma eklenirken bir hata oluştu.');
-        }
+            setFirmalar(prevFirmalar => [yeniEklenenFirma, ...prevFirmalar].sort((a, b) => a.adi.localeCompare(b.adi))); // Sona ekleyip sırala veya direkt başa ekle
+            setYeniFirmaAdi(''); setYeniFirmaVKN(''); setFirmaEklemeFormuGorunur(false);
+        } catch (err) { setFirmaEklemeHatasi(err.response?.data?.msg || 'Firma eklenirken bir hata oluştu.'); }
     };
 
     const handleFirmaSil = async (firmaId, firmaAdi) => {
@@ -59,9 +72,7 @@ function DashboardPage() {
             try {
                 await deleteFirma(firmaId);
                 setFirmalar(prevFirmalar => prevFirmalar.filter(firma => firma.id !== firmaId));
-            } catch (err) {
-                alert(err.response?.data?.msg || 'Firma silinirken bir hata oluştu.');
-            }
+            } catch (err) { alert(err.response?.data?.msg || 'Firma silinirken bir hata oluştu.'); }
         }
     };
     
@@ -70,69 +81,69 @@ function DashboardPage() {
     }
 
     return (
-        <div style={{ maxWidth: '900px', margin: '20px auto', padding: '20px' }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', paddingBottom: '10px', borderBottom: '1px solid #eee' }}>
-                <h2>Merhaba, {currentUser?.username}!</h2>
-                <button onClick={logout} style={{ padding: '10px 18px', background: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Çıkış Yap</button>
+        <div style={styles.pageContainer}>
+            <header style={styles.header}>
+                <h1 style={styles.headerTitle}>Hoş Geldiniz, {currentUser?.username}!</h1>
+                <button onClick={logout} style={styles.logoutButton}>Çıkış Yap</button>
             </header>
             
-            <section style={{ marginBottom: '30px' }}>
-                {/* ... (Firma ekleme formu aynı kalabilir, VKN zorunluluğu zaten eklenmişti) ... */}
-                 {!firmaEklemeFormuGorunur && (
+            <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>Firma İşlemleri</h2>
+                {!firmaEklemeFormuGorunur && (
                     <button 
                         onClick={() => setFirmaEklemeFormuGorunur(true)}
-                        style={{ padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginBottom: '20px' }}
+                        style={{...styles.button, ...styles.primaryButton, marginBottom: '20px' }}
                     >
                         + Yeni Firma Ekle
                     </button>
                 )}
 
                 {firmaEklemeFormuGorunur && (
-                    <form onSubmit={handleFirmaEkleSubmit} style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '5px', marginBottom: '20px', backgroundColor: '#f9f9f9' }}>
-                        <h3>Yeni Firma Bilgileri</h3>
-                        <div style={{ marginBottom: '10px' }}>
-                            <label htmlFor="firmaAdi" style={{ display: 'block', marginBottom: '5px' }}>Firma Adı (*Zorunlu):</label>
-                            <input type="text" id="firmaAdi" value={yeniFirmaAdi} onChange={(e) => setYeniFirmaAdi(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
+                    <form onSubmit={handleFirmaEkleSubmit} style={{ marginBottom: '20px' }}>
+                        <h3 style={{marginTop:0}}>Yeni Firma Bilgileri</h3>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="firmaAdi" style={styles.label}>Firma Adı (*Zorunlu):</label>
+                            <input type="text" id="firmaAdi" value={yeniFirmaAdi} onChange={(e) => setYeniFirmaAdi(e.target.value)} required style={styles.input}/>
                         </div>
-                        <div style={{ marginBottom: '15px' }}>
-                            <label htmlFor="firmaVKN" style={{ display: 'block', marginBottom: '5px' }}>VKN (*Zorunlu):</label>
-                            <input type="text" id="firmaVKN" value={yeniFirmaVKN} onChange={(e) => setYeniFirmaVKN(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/>
+                        <div style={styles.formGroup}>
+                            <label htmlFor="firmaVKN" style={styles.label}>VKN (*Zorunlu):</label>
+                            <input type="text" id="firmaVKN" value={yeniFirmaVKN} onChange={(e) => setYeniFirmaVKN(e.target.value)} required style={styles.input}/>
                         </div>
-                        <button type="submit" style={{ padding: '10px 15px', backgroundColor: '#28a745', color: 'white', border: 'none', marginRight: '10px', borderRadius: '5px' }}>Ekle</button>
-                        <button type="button" onClick={() => setFirmaEklemeFormuGorunur(false)} style={{ padding: '10px 15px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px' }}>İptal</button>
-                        {firmaEklemeHatasi && <p style={{ color: 'red', marginTop: '10px' }}>{firmaEklemeHatasi}</p>}
+                        <button type="submit" style={{...styles.button, ...styles.successButton}}>Ekle</button>
+                        <button type="button" onClick={() => setFirmaEklemeFormuGorunur(false)} style={{...styles.button, ...styles.cancelButton}}>İptal</button>
+                        {firmaEklemeHatasi && <p style={styles.errorText}>{firmaEklemeHatasi}</p>}
                     </form>
                 )}
             </section>
 
-            <section>
-                <h3>Kayıtlı Firmalar</h3>
-                {isLoadingFirmalar && <p>Firmalar yükleniyor...</p>}
-                {errorFirmalar && <p style={{ color: 'red' }}>{errorFirmalar}</p>}
+            <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>Kayıtlı Firmalar</h2>
+                {isLoadingFirmalar && <p style={styles.infoText}>Firmalar yükleniyor...</p>}
+                {errorFirmalar && <p style={styles.errorText}>{errorFirmalar}</p>}
                 {!isLoadingFirmalar && !errorFirmalar && (
                     firmalar.length > 0 ? (
-                        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop:'10px' }}>
+                        <table style={styles.table}>
                             <thead>
-                                <tr style={{ borderBottom: '2px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
-                                    <th style={{ padding: '12px', textAlign: 'left' }}>Firma Adı</th>
-                                    <th style={{ padding: '12px', textAlign: 'left' }}>VKN</th>
-                                    <th style={{ padding: '12px', textAlign: 'left' }}>İşlemler</th>
+                                <tr>
+                                    <th style={styles.th}>Firma Adı</th>
+                                    <th style={styles.th}>VKN</th>
+                                    <th style={styles.th}>İşlemler</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {firmalar.map(firma => (
-                                    <tr key={firma.id} style={{ borderBottom: '1px solid #eee' }}>
-                                        <td style={{ padding: '12px' }}>
-                                            <Link to={`/firmalar/${firma.id}/detay`} style={{textDecoration: 'none', color: '#007bff', fontWeight:'bold'}}>
+                                    <tr key={firma.id}>
+                                        <td style={styles.td}>
+                                            <Link to={`/firmalar/${firma.id}/detay`} style={styles.link}>
                                                 {firma.adi}
                                             </Link>
                                         </td>
-                                        <td style={{ padding: '12px' }}>{firma.vkn}</td>
-                                        <td style={{ padding: '12px' }}>
-                                            <Link to={`/firmalar/${firma.id}/detay`} style={{marginRight: '10px', padding: '6px 10px', cursor:'pointer', backgroundColor:'#17a2b8', color:'white', border:'none', borderRadius:'4px', textDecoration:'none'}}>Detay</Link>
+                                        <td style={styles.td}>{firma.vkn}</td>
+                                        <td style={styles.td}>
+                                            <Link to={`/firmalar/${firma.id}/detay`} style={{...styles.actionButton, ...styles.detailButton, textDecoration:'none'}}>Detay</Link>
                                             <button 
                                                 onClick={() => handleFirmaSil(firma.id, firma.adi)} 
-                                                style={{padding: '6px 10px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor:'pointer'}}
+                                                style={{...styles.actionButton, ...styles.deleteButton}}
                                             >
                                                 Sil
                                             </button>
@@ -142,7 +153,7 @@ function DashboardPage() {
                             </tbody>
                         </table>
                     ) : (
-                        <p>Gösterilecek firma bulunmamaktadır. Yeni bir firma ekleyebilirsiniz.</p>
+                        <p style={styles.infoText}>Gösterilecek firma bulunmamaktadır. Yeni bir firma ekleyebilirsiniz.</p>
                     )
                 )}
             </section>
